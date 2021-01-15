@@ -1,0 +1,1 @@
+sqs=de.idealo.spring.stream.binder.sqs.config.SqsBinderConfiguration
