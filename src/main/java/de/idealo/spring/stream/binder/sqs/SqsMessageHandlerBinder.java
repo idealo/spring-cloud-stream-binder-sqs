@@ -42,6 +42,12 @@ public class SqsMessageHandlerBinder
         SqsMessageDrivenChannelAdapter adapter = new SqsMessageDrivenChannelAdapter(amazonSQS, destination.getName());
         adapter.setMaxNumberOfMessages(properties.getExtension().getMaxNumberOfMessages());
         adapter.setVisibilityTimeout(properties.getExtension().getVisibilityTimeout());
+        adapter.setWaitTimeOut(properties.getExtension().getWaitTimeout());
+        adapter.setQueueStopTimeout(properties.getExtension().getQueueStopTimeout());
+
+        if (properties.getExtension().getMessageDeletionPolicy() != null) {
+            adapter.setMessageDeletionPolicy(properties.getExtension().getMessageDeletionPolicy());
+        }
 
         if (properties.getExtension().isSnsFanout()) {
             adapter.setMessageBuilderFactory(new SnsFanoutMessageBuilderFactory());
