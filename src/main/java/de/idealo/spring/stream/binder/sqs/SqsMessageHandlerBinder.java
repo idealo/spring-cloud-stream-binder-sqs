@@ -34,7 +34,7 @@ public class SqsMessageHandlerBinder
 
     @Override
     protected MessageHandler createProducerMessageHandler(ProducerDestination destination, ExtendedProducerProperties<SqsProducerProperties> producerProperties, MessageChannel errorChannel) throws Exception {
-        return null;
+        throw new UnsupportedOperationException("Producing to SQS is not supported yet");
     }
 
     @Override
