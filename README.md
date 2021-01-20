@@ -23,7 +23,6 @@ You may also provide additional configuration options:
 - **maxNumberOfMessages** - Maximum number of messages to retrieve with one poll to SQS. Must be a number between 1 and 10.
 - **visibilityTimeout** - The duration in seconds that polled messages are hidden from subsequent poll requests after having been retrieved.
 - **waitTimeout** - The duration in seconds that the system will wait for new messages to arrive when polling. Uses the Amazon SQS long polling feature. The value should be between 1 and 20.
-- **queueStopTimeout** - The number of milliseconds that the listener container will wait when stopping before interrupting a thread.
 - **messageDeletionPolicy** - The deletion policy for messages that are retrieved from SQS. Defaults to NO_REDRIVE.
 - **snsFanout** - Whether the incoming message has the SNS format and should be deserialized automatically. Defaults to false.
 

@@ -43,7 +43,6 @@ public class SqsMessageHandlerBinder
         adapter.setMaxNumberOfMessages(properties.getExtension().getMaxNumberOfMessages());
         adapter.setVisibilityTimeout(properties.getExtension().getVisibilityTimeout());
         adapter.setWaitTimeOut(properties.getExtension().getWaitTimeout());
-        adapter.setQueueStopTimeout(properties.getExtension().getQueueStopTimeout());
 
         if (properties.getExtension().getMessageDeletionPolicy() != null) {
             adapter.setMessageDeletionPolicy(properties.getExtension().getMessageDeletionPolicy());
