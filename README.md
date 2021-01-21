@@ -1,4 +1,4 @@
-# Spring Cloud Stream Binder for AWS SNS
+# Spring Cloud Stream Binder for AWS SQS
 
 spring-cloud-stream-binder-sns lets you use [Spring Cloud Stream](https://spring.io/projects/spring-cloud-stream) with the AWS Simple Queue Service (SQS). Currently it only supports consuming from SQS queues to your service, producing will be added later.
 
