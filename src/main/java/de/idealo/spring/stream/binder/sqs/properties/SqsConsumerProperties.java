@@ -8,7 +8,7 @@ public class SqsConsumerProperties {
      * Maximum number of messages to retrieve with one poll to SQS.
      * Must be a number between 1 and 10.
      *
-     * {@link org.springframework.cloud.aws.messaging.listener.SimpleMessageListenerContainer#setMaxNumberOfMessages(Integer)}
+     * {@link io.awspring.cloud.messaging.listener.SimpleMessageListenerContainer#setMaxNumberOfMessages(Integer)}
      */
     private Integer maxNumberOfMessages;
 
@@ -16,7 +16,7 @@ public class SqsConsumerProperties {
      * The duration in seconds that polled messages are hidden from subsequent poll requests
      * after having been retrieved.
      *
-     * {@link org.springframework.cloud.aws.messaging.config.SimpleMessageListenerContainerFactory#setVisibilityTimeout(Integer)}
+     * {@link io.awspring.cloud.messaging.config.SimpleMessageListenerContainerFactory#setVisibilityTimeout(Integer)}
      */
     private Integer visibilityTimeout;
 
@@ -24,7 +24,7 @@ public class SqsConsumerProperties {
      * The duration in seconds that the system will wait for new messages to arrive when polling.
      * Uses the Amazon SQS long polling feature. The value should be between 1 and 20.
      *
-     * {@link org.springframework.cloud.aws.messaging.config.SimpleMessageListenerContainerFactory#setWaitTimeOut(Integer)}
+     * {@link io.awspring.cloud.messaging.config.SimpleMessageListenerContainerFactory#setWaitTimeOut(Integer)}
      */
     private Integer waitTimeout;
 
