@@ -1,5 +1,7 @@
 package de.idealo.spring.stream.binder.sqs.config;
 
+import org.springframework.boot.actuate.autoconfigure.health.ConditionalOnEnabledHealthIndicator;
+import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -8,17 +10,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.amazonaws.services.sqs.AmazonSQSAsync;
-import io.awspring.cloud.messaging.listener.SimpleMessageListenerContainer;
 
 import de.idealo.spring.stream.binder.sqs.SqsMessageHandlerBinder;
-import de.idealo.spring.stream.binder.sqs.health.SqsHealthIndicator;
-import de.idealo.spring.stream.binder.sqs.health.SqsHealthProperties;
+import de.idealo.spring.stream.binder.sqs.health.SqsBinderHealthIndicator;
 import de.idealo.spring.stream.binder.sqs.properties.SqsExtendedBindingProperties;
 import de.idealo.spring.stream.binder.sqs.provisioning.SqsStreamProvisioner;
 
 @Configuration
 @ConditionalOnMissingBean(Binder.class)
-@EnableConfigurationProperties({ SqsExtendedBindingProperties.class, SqsHealthProperties.class })
+@EnableConfigurationProperties({ SqsExtendedBindingProperties.class })
 public class SqsBinderConfiguration {
 
     @Bean
@@ -31,11 +31,16 @@ public class SqsBinderConfiguration {
         return new SqsMessageHandlerBinder(amazonSQS, sqsStreamProvisioner, extendedBindingProperties);
     }
 
-    @Bean
-    @ConditionalOnMissingBean(SqsHealthIndicator.class)
-    @ConditionalOnClass(name = "org.springframework.boot.actuate.health.HealthIndicator")
-    public SqsHealthIndicator sqsHealthIndicator(SimpleMessageListenerContainer container, AmazonSQSAsync amazonSQS, SqsHealthProperties sqsHealthProperties) {
+    @Configuration
+    @ConditionalOnClass(HealthIndicator.class)
+    @ConditionalOnEnabledHealthIndicator("binders")
+    protected static class SqsBinderHealthIndicatorConfiguration {
 
-        return new SqsHealthIndicator(container, amazonSQS, sqsHealthProperties);
+        @Bean
+        @ConditionalOnMissingBean(name = "sqsBinderHealthIndicator")
+        public SqsBinderHealthIndicator sqsBinderHealthIndicator(SqsMessageHandlerBinder sqsMessageHandlerBinder) {
+            return new SqsBinderHealthIndicator(sqsMessageHandlerBinder);
+        }
+
     }
 }
