@@ -31,7 +31,11 @@ public class SqsBinderHealthIndicator extends AbstractHealthIndicator {
     protected void doHealthCheck(Health.Builder builder) {
         boolean allListenersRunning = true;
 
-        // TODO set status to unknown if no adapters are available (isEmpty)
+        if (sqsMessageHandlerBinder.getAdapters().isEmpty()) {
+            builder.unknown();
+            allListenersRunning = false;
+        }
+
         for (SqsMessageDrivenChannelAdapter adapter : this.sqsMessageHandlerBinder.getAdapters()) {
             for (String queueName : adapter.getQueues()) {
                 if (!adapter.isRunning(queueName)) {

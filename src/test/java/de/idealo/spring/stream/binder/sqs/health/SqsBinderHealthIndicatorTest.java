@@ -3,6 +3,7 @@ package de.idealo.spring.stream.binder.sqs.health;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
@@ -41,7 +42,7 @@ class SqsBinderHealthIndicatorTest {
 
     @BeforeEach
     void setUp() {
-        when(sqsMessageHandlerBinder.getAmazonSQS()).thenReturn(amazonSQS);
+        lenient().when(sqsMessageHandlerBinder.getAmazonSQS()).thenReturn(amazonSQS);
         when(sqsMessageHandlerBinder.getAdapters()).thenReturn(Collections.singletonList(adapter));
     }
 
@@ -57,6 +58,17 @@ class SqsBinderHealthIndicatorTest {
 
         assertThat(builder.build().getStatus()).isEqualTo(Status.UP);
 
+    }
+
+    @Test
+    void reportsUnknownWhenNoBindingsAreConfigured() {
+        when(sqsMessageHandlerBinder.getAdapters()).thenReturn(Collections.emptyList());
+
+        Health.Builder builder = new Health.Builder();
+
+        healthIndicator.doHealthCheck(builder);
+
+        assertThat(builder.build().getStatus()).isEqualTo(Status.UNKNOWN);
     }
 
     @Test
