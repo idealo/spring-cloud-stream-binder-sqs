@@ -33,7 +33,7 @@ import reactor.test.StepVerifier;
         "spring.cloud.stream.bindings.input-in-0.destination=queue1",
         "spring.cloud.stream.bindings.function.definition=input"
 })
-class SqsBinderIT {
+class SqsBinderTest {
 
     @Container
     private static final LocalStackContainer localStack = new LocalStackContainer(DockerImageName.parse("localstack/localstack:0.12.10"))
