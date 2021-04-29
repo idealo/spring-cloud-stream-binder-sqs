@@ -5,6 +5,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
+import java.util.Collections;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,7 +21,6 @@ import com.amazonaws.SdkClientException;
 import com.amazonaws.services.sqs.AmazonSQSAsync;
 import com.amazonaws.services.sqs.model.GetQueueUrlResult;
 import com.amazonaws.services.sqs.model.QueueDoesNotExistException;
-import com.sun.tools.javac.util.List;
 
 import de.idealo.spring.stream.binder.sqs.SqsMessageHandlerBinder;
 
@@ -41,7 +42,7 @@ class SqsBinderHealthIndicatorTest {
     @BeforeEach
     void setUp() {
         when(sqsMessageHandlerBinder.getAmazonSQS()).thenReturn(amazonSQS);
-        when(sqsMessageHandlerBinder.getAdapters()).thenReturn(List.of(adapter));
+        when(sqsMessageHandlerBinder.getAdapters()).thenReturn(Collections.singletonList(adapter));
     }
 
     @Test
