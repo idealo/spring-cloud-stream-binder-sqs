@@ -3,8 +3,7 @@ package de.idealo.spring.stream.binder.sqs;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.testcontainers.containers.localstack.LocalStackContainer.Service.SQS;
 
-import java.util.Locale;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -68,8 +67,8 @@ class SqsBinderAT {
         }
 
         @Bean
-        Function<String, String> input() {
-            return (String s) -> s.toUpperCase(Locale.getDefault());
+        Consumer<String> input() {
+            return (String s) -> System.out.println(s);
         }
     }
 
