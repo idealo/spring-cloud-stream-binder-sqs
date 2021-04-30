@@ -1,5 +1,8 @@
 package de.idealo.spring.stream.binder.sqs;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.cloud.stream.binder.AbstractMessageChannelBinder;
 import org.springframework.cloud.stream.binder.BinderSpecificPropertiesProvider;
 import org.springframework.cloud.stream.binder.ExtendedConsumerProperties;
@@ -25,11 +28,20 @@ public class SqsMessageHandlerBinder
 
     private final AmazonSQSAsync amazonSQS;
     private final SqsExtendedBindingProperties extendedBindingProperties;
+    private final List<SqsMessageDrivenChannelAdapter> adapters = new ArrayList<>();
 
     public SqsMessageHandlerBinder(AmazonSQSAsync amazonSQS, SqsStreamProvisioner provisioningProvider, SqsExtendedBindingProperties extendedBindingProperties) {
         super(new String[0], provisioningProvider);
         this.amazonSQS = amazonSQS;
         this.extendedBindingProperties = extendedBindingProperties;
+    }
+
+    public AmazonSQSAsync getAmazonSQS() {
+        return amazonSQS;
+    }
+
+    public List<SqsMessageDrivenChannelAdapter> getAdapters() {
+        return adapters;
     }
 
     @Override
@@ -51,6 +63,8 @@ public class SqsMessageHandlerBinder
         if (properties.getExtension().isSnsFanout()) {
             adapter.setMessageBuilderFactory(new SnsFanoutMessageBuilderFactory());
         }
+
+        this.adapters.add(adapter);
 
         return adapter;
     }
