@@ -1,0 +1,15 @@
+{
+  "branches": ["+([0-9])?(.{+([0-9]),x}).x", "main"],
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    ["@semantic-release/exec", {
+      "prepareCmd": "mvn versions:set -DgenerateBackupPoms=false -DnewVersion=${nextRelease.version} -B -ntp",
+      "publishCmd": "mvn deploy -B -ntp"
+    }],
+    ["@semantic-release/git", {
+      "assets": ["pom.xml"]
+    }],
+    "@semantic-release/github"
+  ]
+}
