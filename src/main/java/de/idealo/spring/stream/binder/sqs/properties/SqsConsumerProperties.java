@@ -1,6 +1,6 @@
 package de.idealo.spring.stream.binder.sqs.properties;
 
-import org.springframework.cloud.aws.messaging.listener.SqsMessageDeletionPolicy;
+import io.awspring.cloud.messaging.listener.SqsMessageDeletionPolicy;
 
 public class SqsConsumerProperties {
 
