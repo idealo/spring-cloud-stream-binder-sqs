@@ -22,7 +22,6 @@ import org.testcontainers.utility.DockerImageName;
 
 import com.amazonaws.services.sqs.AmazonSQSAsync;
 import com.amazonaws.services.sqs.AmazonSQSAsyncClientBuilder;
-
 import reactor.core.publisher.Sinks;
 import reactor.test.StepVerifier;
 
@@ -31,10 +30,9 @@ import reactor.test.StepVerifier;
         "cloud.aws.stack.auto=false",
         "cloud.aws.region.static=eu-central-1",
         "spring.cloud.stream.bindings.input-in-0.destination=queue1",
-        "spring.cloud.stream.bindings.function.definition=input",
-        "spring.cloud.stream.sqs.bindings.input-in-0.consumer.snsFanout=false"
+        "spring.cloud.stream.bindings.function.definition=input"
 })
-class SqsBinderTest {
+class SqsBinderForSNSTest {
 
     @Container
     private static final LocalStackContainer localStack = new LocalStackContainer(DockerImageName.parse("localstack/localstack:0.12.10"))
@@ -56,10 +54,16 @@ class SqsBinderTest {
 
     @Test
     void shouldPassMessageToConsumer() {
-        String testMessage = "test message";
+        final String testMessage = "test message";
+
+        String json =
+                "{" +
+                    "\"Type\": \"Notification\"," +
+                        "\"Message\": \"" + testMessage + "\"" +
+                "}";
 
         String queueUrl = amazonSQS.getQueueUrl("queue1").getQueueUrl();
-        amazonSQS.sendMessage(queueUrl, testMessage);
+        amazonSQS.sendMessage(queueUrl, json);
 
         StepVerifier.create(sink.asFlux())
                 .assertNext(message -> {

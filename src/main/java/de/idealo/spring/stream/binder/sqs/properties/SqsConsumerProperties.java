@@ -35,9 +35,9 @@ public class SqsConsumerProperties {
 
     /**
      * Whether the incoming message has the SNS format and should be deserialized automatically.
-     * Defaults to false.
+     * Defaults to true.
      */
-    private boolean snsFanout;
+    private boolean snsFanout = true;
 
     public Integer getMaxNumberOfMessages() {
         return maxNumberOfMessages;
