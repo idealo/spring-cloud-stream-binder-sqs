@@ -24,7 +24,7 @@ You may also provide additional configuration options:
 - **visibilityTimeout** - The duration in seconds that polled messages are hidden from subsequent poll requests after having been retrieved.
 - **waitTimeout** - The duration in seconds that the system will wait for new messages to arrive when polling. Uses the Amazon SQS long polling feature. The value should be between 1 and 20.
 - **messageDeletionPolicy** - The deletion policy for messages that are retrieved from SQS. Defaults to NO_REDRIVE.
-- **snsFanout** - Whether the incoming message has the SNS format and should be deserialized automatically. Defaults to false.
+- **snsFanout** - Whether the incoming message has the SNS format and should be deserialized automatically. Defaults to true.
 
 **Example Configuration:**
 
@@ -36,7 +36,7 @@ spring:
         bindings:
           someFunction-in-0:
             consumer:
-              snsFanout: true
+              snsFanout: false
       bindings:
         someFunction-in-0:
           destination: queue-name
