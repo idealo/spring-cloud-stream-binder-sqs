@@ -26,6 +26,9 @@ You may also provide additional configuration options:
   - **waitTimeout** - The duration in seconds that the system will wait for new messages to arrive when polling. Uses the Amazon SQS long polling feature. The value should be between 1 and 20.
   - **messageDeletionPolicy** - The deletion policy for messages that are retrieved from SQS. Defaults to NO_REDRIVE.
   - **snsFanout** - Whether the incoming message has the SNS format and should be deserialized automatically. Defaults to true.
+- **Producers**
+  - **messageGroupIdExpression** - SpEL expression that will be applied to the message to get the group id. You have access to the `payload` and `headers` properties. See [FIFO](#fifo-queues) for more info.
+  - **messageDeduplicationIdExpression** - SpEL expression that will be applied to the message to get the deduplication id. You have access to the `payload` and `headers` properties. See [FIFO](#fifo-queues) for more info.
 
 **Example Configuration:**
 
@@ -46,3 +49,29 @@ spring:
 ```
 
 You may also provide your own beans of `AmazonSQSAsync` to override those that are created by [spring-cloud-aws-autoconfigure](https://github.com/spring-cloud/spring-cloud-aws/tree/master/spring-cloud-aws-autoconfigure).
+
+### FIFO queues
+
+To use [FIFO SQS queues](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/FIFO-queues.html) you will need to provide a deduplication id and a group id.
+With this binder you may set these with a SpEL expression that can pull values out of the message to be sent.
+This way you can either configure constant values or a dynamic ids based on what the message contains.
+The example below shows how you could use a FIFO queue in real life.
+
+**Example Configuration:**
+
+```yaml
+spring:
+  cloud:
+    stream:
+      sqs:
+        bindings:
+          someSupplier-out-0:
+            producer:
+              messageGroupIdExpression: \'my-group\'
+              messageDeduplicationIdExpression: headers.get('dedupId')
+      bindings:
+        someSupplier-out-0:
+          destination: output-queue-name.fifo
+```
+
+You can then set the deduplication id as a message header in your code: `MessageBuilder.withPayload("my-payload").setHeader("dedupId", "my-id").build();`

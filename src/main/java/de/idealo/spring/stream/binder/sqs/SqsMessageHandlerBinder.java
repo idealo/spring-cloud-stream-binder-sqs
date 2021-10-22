@@ -52,6 +52,15 @@ public class SqsMessageHandlerBinder
         sqsMessageHandler.setQueue(destination.getName());
         sqsMessageHandler.setFailureChannel(errorChannel);
         sqsMessageHandler.setBeanFactory(getBeanFactory());
+
+        if (producerProperties.getExtension().getMessageGroupIdExpression() != null) {
+            sqsMessageHandler.setMessageGroupIdExpressionString(producerProperties.getExtension().getMessageGroupIdExpression());
+        }
+
+        if (producerProperties.getExtension().getMessageDeduplicationIdExpression() != null) {
+            sqsMessageHandler.setMessageDeduplicationIdExpressionString(producerProperties.getExtension().getMessageDeduplicationIdExpression());
+        }
+
         return sqsMessageHandler;
     }
 
