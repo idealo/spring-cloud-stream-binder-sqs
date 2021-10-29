@@ -47,8 +47,6 @@ import reactor.test.StepVerifier;
         "spring.cloud.stream.sqs.bindings.input-in-0.consumer.snsFanout=false",
         "spring.cloud.stream.bindings.output-out-0.destination=queue2",
         "spring.cloud.stream.bindings.fifoOutput-out-0.destination=queue3.fifo",
-        "spring.cloud.stream.sqs.bindings.fifoOutput-out-0.producer.messageGroupIdExpression='my-group'",
-        "spring.cloud.stream.sqs.bindings.fifoOutput-out-0.producer.messageDeduplicationIdExpression=headers.get('dedupId')",
         "spring.cloud.function.definition=input;output;fifoOutput"
 })
 class SqsBinderTest {
@@ -109,7 +107,8 @@ class SqsBinderTest {
     void shouldPublishMessageToFifoQueue() {
         org.springframework.messaging.Message<String> message = MessageBuilder
                 .withPayload("fifo body")
-                .setHeader("dedupId", "unique1")
+                .setHeader(SqsHeaders.GROUP_ID, "my-group")
+                .setHeader(SqsHeaders.DEDUPLICATION_ID, "unique1")
                 .build();
 
         fifoOutputSink.tryEmitNext(message);

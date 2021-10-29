@@ -53,13 +53,8 @@ public class SqsMessageHandlerBinder
         sqsMessageHandler.setFailureChannel(errorChannel);
         sqsMessageHandler.setBeanFactory(getBeanFactory());
 
-        if (producerProperties.getExtension().getMessageGroupIdExpression() != null) {
-            sqsMessageHandler.setMessageGroupIdExpressionString(producerProperties.getExtension().getMessageGroupIdExpression());
-        }
-
-        if (producerProperties.getExtension().getMessageDeduplicationIdExpression() != null) {
-            sqsMessageHandler.setMessageDeduplicationIdExpressionString(producerProperties.getExtension().getMessageDeduplicationIdExpression());
-        }
+        sqsMessageHandler.setMessageGroupIdExpressionString(String.format("headers.get('%s')", SqsHeaders.GROUP_ID));
+        sqsMessageHandler.setMessageDeduplicationIdExpressionString(String.format("headers.get('%s')", SqsHeaders.DEDUPLICATION_ID));
 
         return sqsMessageHandler;
     }
