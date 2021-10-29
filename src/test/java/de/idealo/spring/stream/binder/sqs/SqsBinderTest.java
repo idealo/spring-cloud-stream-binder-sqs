@@ -52,7 +52,7 @@ import reactor.test.StepVerifier;
 class SqsBinderTest {
 
     @Container
-    private static final LocalStackContainer localStack = new LocalStackContainer(DockerImageName.parse("localstack/localstack:0.12.10"))
+    private static final LocalStackContainer localStack = new LocalStackContainer(DockerImageName.parse("localstack/localstack:0.12.19"))
             .withServices(SQS)
             .withEnv("DEFAULT_REGION", "eu-central-1");
 
