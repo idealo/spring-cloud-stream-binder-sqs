@@ -11,6 +11,8 @@ import org.springframework.cloud.stream.binder.ExtendedPropertiesBinder;
 import org.springframework.cloud.stream.provisioning.ConsumerDestination;
 import org.springframework.cloud.stream.provisioning.ProducerDestination;
 import org.springframework.integration.aws.inbound.SqsMessageDrivenChannelAdapter;
+import org.springframework.integration.aws.outbound.SqsMessageHandler;
+import org.springframework.integration.channel.AbstractMessageChannel;
 import org.springframework.integration.core.MessageProducer;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
@@ -46,7 +48,15 @@ public class SqsMessageHandlerBinder
 
     @Override
     protected MessageHandler createProducerMessageHandler(ProducerDestination destination, ExtendedProducerProperties<SqsProducerProperties> producerProperties, MessageChannel errorChannel) throws Exception {
-        throw new UnsupportedOperationException("Producing to SQS is not supported yet");
+        SqsMessageHandler sqsMessageHandler = new SqsMessageHandler(amazonSQS);
+        sqsMessageHandler.setQueue(destination.getName());
+        sqsMessageHandler.setFailureChannel(errorChannel);
+        sqsMessageHandler.setBeanFactory(getBeanFactory());
+
+        sqsMessageHandler.setMessageGroupIdExpressionString(String.format("headers.get('%s')", SqsHeaders.GROUP_ID));
+        sqsMessageHandler.setMessageDeduplicationIdExpressionString(String.format("headers.get('%s')", SqsHeaders.DEDUPLICATION_ID));
+
+        return sqsMessageHandler;
     }
 
     @Override
@@ -87,5 +97,10 @@ public class SqsMessageHandlerBinder
     @Override
     public Class<? extends BinderSpecificPropertiesProvider> getExtendedPropertiesEntryClass() {
         return this.extendedBindingProperties.getExtendedPropertiesEntryClass();
+    }
+
+    @Override
+    protected void postProcessOutputChannel(MessageChannel outputChannel, ExtendedProducerProperties<SqsProducerProperties> producerProperties) {
+        ((AbstractMessageChannel) outputChannel).addInterceptor(new SqsPayloadConvertingChannelInterceptor());
     }
 }
