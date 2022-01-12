@@ -16,7 +16,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.Status;
-import org.springframework.integration.aws.inbound.SqsMessageDrivenChannelAdapter;
 
 import com.amazonaws.SdkClientException;
 import com.amazonaws.services.sqs.AmazonSQSAsync;
@@ -24,6 +23,7 @@ import com.amazonaws.services.sqs.model.GetQueueUrlResult;
 import com.amazonaws.services.sqs.model.QueueDoesNotExistException;
 
 import de.idealo.spring.stream.binder.sqs.SqsMessageHandlerBinder;
+import de.idealo.spring.stream.binder.sqs.inbound.SqsInboundChannelAdapter;
 
 @ExtendWith(MockitoExtension.class)
 class SqsBinderHealthIndicatorTest {
@@ -35,7 +35,7 @@ class SqsBinderHealthIndicatorTest {
     private AmazonSQSAsync amazonSQS;
 
     @Mock
-    private SqsMessageDrivenChannelAdapter adapter;
+    private SqsInboundChannelAdapter adapter;
 
     @InjectMocks
     private SqsBinderHealthIndicator healthIndicator;

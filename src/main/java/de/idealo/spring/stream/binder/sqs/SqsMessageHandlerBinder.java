@@ -10,7 +10,6 @@ import org.springframework.cloud.stream.binder.ExtendedProducerProperties;
 import org.springframework.cloud.stream.binder.ExtendedPropertiesBinder;
 import org.springframework.cloud.stream.provisioning.ConsumerDestination;
 import org.springframework.cloud.stream.provisioning.ProducerDestination;
-import org.springframework.integration.aws.inbound.SqsMessageDrivenChannelAdapter;
 import org.springframework.integration.aws.outbound.SqsMessageHandler;
 import org.springframework.integration.channel.AbstractMessageChannel;
 import org.springframework.integration.core.MessageProducer;
@@ -19,6 +18,7 @@ import org.springframework.messaging.MessageHandler;
 
 import com.amazonaws.services.sqs.AmazonSQSAsync;
 
+import de.idealo.spring.stream.binder.sqs.inbound.SqsInboundChannelAdapter;
 import de.idealo.spring.stream.binder.sqs.properties.SqsConsumerProperties;
 import de.idealo.spring.stream.binder.sqs.properties.SqsExtendedBindingProperties;
 import de.idealo.spring.stream.binder.sqs.properties.SqsProducerProperties;
@@ -30,7 +30,7 @@ public class SqsMessageHandlerBinder
 
     private final AmazonSQSAsync amazonSQS;
     private final SqsExtendedBindingProperties extendedBindingProperties;
-    private final List<SqsMessageDrivenChannelAdapter> adapters = new ArrayList<>();
+    private final List<SqsInboundChannelAdapter> adapters = new ArrayList<>();
 
     public SqsMessageHandlerBinder(AmazonSQSAsync amazonSQS, SqsStreamProvisioner provisioningProvider, SqsExtendedBindingProperties extendedBindingProperties) {
         super(new String[0], provisioningProvider);
@@ -42,8 +42,8 @@ public class SqsMessageHandlerBinder
         return amazonSQS;
     }
 
-    public List<SqsMessageDrivenChannelAdapter> getAdapters() {
-        return adapters;
+    public List<SqsInboundChannelAdapter> getAdapters() {
+        return new ArrayList<>(adapters);
     }
 
     @Override
@@ -61,8 +61,9 @@ public class SqsMessageHandlerBinder
 
     @Override
     protected MessageProducer createConsumerEndpoint(ConsumerDestination destination, String group, ExtendedConsumerProperties<SqsConsumerProperties> properties) throws Exception {
-        SqsMessageDrivenChannelAdapter adapter = new SqsMessageDrivenChannelAdapter(amazonSQS, destination.getName());
+        SqsInboundChannelAdapter adapter = new SqsInboundChannelAdapter(amazonSQS, destination.getName());
         adapter.setMaxNumberOfMessages(properties.getExtension().getMaxNumberOfMessages());
+        adapter.setConcurrency(properties.getConcurrency());
         adapter.setVisibilityTimeout(properties.getExtension().getVisibilityTimeout());
         adapter.setWaitTimeOut(properties.getExtension().getWaitTimeout());
 
