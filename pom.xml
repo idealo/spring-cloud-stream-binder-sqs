@@ -4,7 +4,7 @@
 
     <groupId>de.idealo.spring</groupId>
     <artifactId>spring-cloud-stream-binder-sqs</artifactId>
-    <version>1.5.0</version>
+    <version>1.6.0</version>
     <name>Spring Cloud Stream Binder for AWS SQS</name>
     <description>Allows you to use Spring Cloud Stream together with AWS SQS</description>
     <url>https://github.com/idealo/spring-cloud-stream-binder-sqs</url>
