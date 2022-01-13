@@ -4,13 +4,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.health.AbstractHealthIndicator;
 import org.springframework.boot.actuate.health.Health;
-import org.springframework.integration.aws.inbound.SqsMessageDrivenChannelAdapter;
 import org.springframework.util.Assert;
 
 import com.amazonaws.SdkClientException;
 import com.amazonaws.services.sqs.model.QueueDoesNotExistException;
 
 import de.idealo.spring.stream.binder.sqs.SqsMessageHandlerBinder;
+import de.idealo.spring.stream.binder.sqs.inbound.SqsInboundChannelAdapter;
 
 /**
  * Code from
@@ -36,7 +36,7 @@ public class SqsBinderHealthIndicator extends AbstractHealthIndicator {
             allListenersRunning = false;
         }
 
-        for (SqsMessageDrivenChannelAdapter adapter : this.sqsMessageHandlerBinder.getAdapters()) {
+        for (SqsInboundChannelAdapter adapter : this.sqsMessageHandlerBinder.getAdapters()) {
             for (String queueName : adapter.getQueues()) {
                 if (!adapter.isRunning(queueName)) {
                     builder.down().withDetail(queueName, "listener is not running");
