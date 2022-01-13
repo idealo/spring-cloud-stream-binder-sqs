@@ -77,3 +77,29 @@ class Application {
   }
 }
 ```
+
+### Concurrency
+
+Consumers in the SQS binder support the Spring Cloud Stream `concurrency` property.
+By specifying a value you will launch `concurrency`  threads continuously polling for `maxNumberOfMessages` each.
+The threads will process all messages asynchronously, but each thread will wait for its current batch of messages to all complete processing before retrieving new ones.
+If your message processing is highly variable from message to message it is recommended to set a lower value for `maxNumberOfMessages` and a higher value for `concurrency`.
+Note that this will increase the amount of API calls done against SQS.
+
+**Example Configuration:**
+
+```yaml
+spring:
+  cloud:
+    stream:
+      sqs:
+        bindings:
+          someFunction-in-0:
+            consumer:
+              maxNumberOfMessages: 5
+      bindings:
+        someFunction-in-0:
+          destination: input-queue-name
+          consumer:
+            concurrency: 10
+```
