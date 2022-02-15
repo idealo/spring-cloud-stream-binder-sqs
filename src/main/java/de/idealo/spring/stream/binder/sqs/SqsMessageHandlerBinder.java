@@ -53,6 +53,7 @@ public class SqsMessageHandlerBinder
         sqsMessageHandler.setFailureChannel(errorChannel);
         sqsMessageHandler.setBeanFactory(getBeanFactory());
 
+        sqsMessageHandler.setDelayExpressionString(String.format("headers.get('%s')", SqsHeaders.DELAY));
         sqsMessageHandler.setMessageGroupIdExpressionString(String.format("headers.get('%s')", SqsHeaders.GROUP_ID));
         sqsMessageHandler.setMessageDeduplicationIdExpressionString(String.format("headers.get('%s')", SqsHeaders.DEDUPLICATION_ID));
 

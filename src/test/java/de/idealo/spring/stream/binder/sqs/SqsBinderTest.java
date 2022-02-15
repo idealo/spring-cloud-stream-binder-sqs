@@ -47,7 +47,8 @@ import reactor.test.StepVerifier;
         "spring.cloud.stream.sqs.bindings.input-in-0.consumer.snsFanout=false",
         "spring.cloud.stream.bindings.output-out-0.destination=queue2",
         "spring.cloud.stream.bindings.fifoOutput-out-0.destination=queue3.fifo",
-        "spring.cloud.function.definition=input;output;fifoOutput"
+        "spring.cloud.stream.bindings.delayedOutput-out-0.destination=queue4",
+        "spring.cloud.function.definition=input;output;fifoOutput;delayedOutput"
 })
 class SqsBinderTest {
 
@@ -59,6 +60,7 @@ class SqsBinderTest {
     private static final Sinks.Many<String> inputSink = Sinks.many().multicast().onBackpressureBuffer();
     private static final Sinks.Many<String> outputSink = Sinks.many().multicast().onBackpressureBuffer();
     private static final Sinks.Many<org.springframework.messaging.Message<String>> fifoOutputSink = Sinks.many().multicast().onBackpressureBuffer();
+    private static final Sinks.Many<org.springframework.messaging.Message<String>> delayedOutputSink = Sinks.many().multicast().onBackpressureBuffer();
 
     @SpyBean
     private AmazonSQSAsync amazonSQS;
@@ -71,6 +73,7 @@ class SqsBinderTest {
         localStack.execInContainer("awslocal", "sqs", "create-queue", "--queue-name", "queue1");
         localStack.execInContainer("awslocal", "sqs", "create-queue", "--queue-name", "queue2");
         localStack.execInContainer("awslocal", "sqs", "create-queue", "--queue-name", "queue3.fifo", "--attributes", "FifoQueue=true");
+        localStack.execInContainer("awslocal", "sqs", "create-queue", "--queue-name", "queue4");
     }
 
     @Test
@@ -130,6 +133,30 @@ class SqsBinderTest {
     }
 
     @Test
+    void shouldPublishDelayedMessage() {
+        org.springframework.messaging.Message<String> message = MessageBuilder
+                .withPayload("test message")
+                .setHeader(SqsHeaders.DELAY, 5)
+                .build();
+
+        delayedOutputSink.tryEmitNext(message);
+
+        ArgumentCaptor<SendMessageRequest> captor = ArgumentCaptor.forClass(SendMessageRequest.class);
+        verify(amazonSQS, timeout(500)).sendMessageAsync(captor.capture(), any());
+
+        SendMessageRequest actualRequest = captor.getValue();
+        assertThat(actualRequest.getDelaySeconds()).isEqualTo(5);
+
+        String queueUrl = amazonSQS.getQueueUrl("queue4").getQueueUrl();
+        await().atMost(6, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<Message> messages = amazonSQS.receiveMessage(queueUrl).getMessages();
+            assertThat(messages).hasSize(1)
+                    .extracting("body")
+                    .containsExactly(message.getPayload());
+        });
+    }
+
+    @Test
     void canTestHealth() {
         assertThat(healthEndpoint.health().getStatus()).isEqualTo(Status.UP);
         assertThat(healthEndpoint.healthForPath("sqsBinder").getStatus()).isEqualTo(Status.UP);
@@ -159,6 +186,11 @@ class SqsBinderTest {
         @Bean
         Supplier<Flux<org.springframework.messaging.Message<String>>> fifoOutput() {
             return fifoOutputSink::asFlux;
+        }
+
+        @Bean
+        Supplier<Flux<org.springframework.messaging.Message<String>>> delayedOutput() {
+            return delayedOutputSink::asFlux;
         }
     }
 
