@@ -25,5 +25,4 @@ public class SqsBindingProperties implements BinderSpecificPropertiesProvider {
     public void setProducer(SqsProducerProperties producer) {
         this.producer = producer;
     }
-
 }
