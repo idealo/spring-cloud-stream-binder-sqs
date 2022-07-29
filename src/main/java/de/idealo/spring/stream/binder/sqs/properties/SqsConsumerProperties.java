@@ -29,6 +29,14 @@ public class SqsConsumerProperties {
     private Integer waitTimeout;
 
     /**
+     * The number of milliseconds that the queue worker is given to gracefully finish its work on shutdown before
+     * interrupting the current thread. Default value is 20000 milliseconds (20 seconds).
+     *
+     * {@link io.awspring.cloud.messaging.config.SimpleMessageListenerContainerFactory#setQueueStopTimeout(Long)}
+     */
+    private Integer queueStopTimeout;
+
+    /**
      * The deletion policy for messages that are retrieved from SQS. Defaults to NO_REDRIVE.
      */
     private SqsMessageDeletionPolicy messageDeletionPolicy;
@@ -61,6 +69,14 @@ public class SqsConsumerProperties {
 
     public void setWaitTimeout(Integer waitTimeout) {
         this.waitTimeout = waitTimeout;
+    }
+
+    public Integer getQueueStopTimeout() {
+        return queueStopTimeout;
+    }
+
+    public void setQueueStopTimeout(Integer queueStopTimeout) {
+        this.queueStopTimeout = queueStopTimeout;
     }
 
     public SqsMessageDeletionPolicy getMessageDeletionPolicy() {
