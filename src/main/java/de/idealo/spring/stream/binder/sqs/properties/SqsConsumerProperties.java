@@ -34,7 +34,7 @@ public class SqsConsumerProperties {
      *
      * {@link io.awspring.cloud.messaging.config.SimpleMessageListenerContainerFactory#setQueueStopTimeout(Long)}
      */
-    private Integer queueStopTimeout;
+    private Long queueStopTimeout;
 
     /**
      * The deletion policy for messages that are retrieved from SQS. Defaults to NO_REDRIVE.
@@ -71,11 +71,11 @@ public class SqsConsumerProperties {
         this.waitTimeout = waitTimeout;
     }
 
-    public Integer getQueueStopTimeout() {
+    public Long getQueueStopTimeout() {
         return queueStopTimeout;
     }
 
-    public void setQueueStopTimeout(Integer queueStopTimeout) {
+    public void setQueueStopTimeout(Long queueStopTimeout) {
         this.queueStopTimeout = queueStopTimeout;
     }
 
