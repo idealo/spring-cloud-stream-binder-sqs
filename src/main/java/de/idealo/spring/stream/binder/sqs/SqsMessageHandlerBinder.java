@@ -68,6 +68,10 @@ public class SqsMessageHandlerBinder
         adapter.setVisibilityTimeout(properties.getExtension().getVisibilityTimeout());
         adapter.setWaitTimeOut(properties.getExtension().getWaitTimeout());
 
+        if (properties.getExtension().getQueueStopTimeout() != null) {
+            adapter.setQueueStopTimeout(properties.getExtension().getQueueStopTimeout());
+        }
+
         if (properties.getExtension().getMessageDeletionPolicy() != null) {
             adapter.setMessageDeletionPolicy(properties.getExtension().getMessageDeletionPolicy());
         }
