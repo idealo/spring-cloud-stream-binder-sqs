@@ -152,7 +152,7 @@ class SqsBinderHealthIndicatorTest {
 
     @Test
     void reportsFalseIfAtLeastOneConfiguredQueueUrlIsNotReachable() {
-        when(adapter.getQueues()).thenReturn(new String[] { "https://sqs.eu-central-1.amazonaws.com/1234567890/queue1", "https://sqs.eu-central-1.amazonaws.com/1234567890/queue2" });
+        when(adapter.getQueues()).thenReturn(new String[] { "https://sqs.eu-central-1.amazonaws.com/12345678901/queue1", "https://sqs.eu-central-1.amazonaws.com/12345678901/queue2" });
         when(adapter.isRunning(any())).thenReturn(true);
         when(amazonSQS.getQueueAttributes(anyString(), anyList())).thenThrow(SdkClientException.class);
 
@@ -162,6 +162,6 @@ class SqsBinderHealthIndicatorTest {
 
         Health health = builder.build();
         assertThat(health.getStatus()).isEqualTo(Status.DOWN);
-        assertThat(health.getDetails()).containsKey("https://sqs.eu-central-1.amazonaws.com/1234567890/queue1");
+        assertThat(health.getDetails()).containsKey("https://sqs.eu-central-1.amazonaws.com/12345678901/queue1");
     }
 }
