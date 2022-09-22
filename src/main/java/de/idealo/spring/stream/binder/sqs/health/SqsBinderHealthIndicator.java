@@ -1,5 +1,10 @@
 package de.idealo.spring.stream.binder.sqs.health;
 
+import static java.util.Collections.singletonList;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.health.AbstractHealthIndicator;
@@ -57,13 +62,26 @@ public class SqsBinderHealthIndicator extends AbstractHealthIndicator {
 
     private boolean isReachable(String queueName) {
         try {
-            this.sqsMessageHandlerBinder.getAmazonSQS().getQueueUrl(queueName);
+            if (isValidQueueUrl(queueName)) {
+                this.sqsMessageHandlerBinder.getAmazonSQS().getQueueAttributes(queueName, singletonList("CreatedTimestamp"));
+            } else {
+                this.sqsMessageHandlerBinder.getAmazonSQS().getQueueUrl(queueName);
+            }
             return true;
         } catch (QueueDoesNotExistException e) {
             LOGGER.warn("Queue '{}' does not exist", queueName);
             return false;
         } catch (SdkClientException e) {
             LOGGER.error("Queue '{}' is not reachable", queueName, e);
+            return false;
+        }
+    }
+
+    private static boolean isValidQueueUrl(String name) {
+        try {
+            URI candidate = new URI(name);
+            return "http".equals(candidate.getScheme()) || "https".equals(candidate.getScheme());
+        } catch (URISyntaxException var2) {
             return false;
         }
     }
