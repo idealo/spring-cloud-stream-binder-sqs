@@ -9,7 +9,7 @@ spring-cloud-stream-binder-sqs lets you use [Spring Cloud Stream](https://spring
     <dependency>
         <groupId>de.idealo.spring</groupId>
         <artifactId>spring-cloud-stream-binder-sqs</artifactId>
-        <version>1.5.0</version>
+        <version>1.9.0</version>
     </dependency>
 </dependencies>
 ```
