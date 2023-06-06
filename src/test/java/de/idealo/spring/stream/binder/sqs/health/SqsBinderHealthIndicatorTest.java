@@ -2,13 +2,12 @@ package de.idealo.spring.stream.binder.sqs.health;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,11 +18,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.Status;
 
-import com.amazonaws.SdkClientException;
-import com.amazonaws.services.sqs.AmazonSQSAsync;
-import com.amazonaws.services.sqs.model.GetQueueAttributesResult;
-import com.amazonaws.services.sqs.model.GetQueueUrlResult;
-import com.amazonaws.services.sqs.model.QueueDoesNotExistException;
+import software.amazon.awssdk.core.exception.SdkClientException;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.GetQueueAttributesRequest;
+import software.amazon.awssdk.services.sqs.model.GetQueueAttributesResponse;
+import software.amazon.awssdk.services.sqs.model.GetQueueUrlRequest;
+import software.amazon.awssdk.services.sqs.model.GetQueueUrlResponse;
+import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
+import software.amazon.awssdk.services.sqs.model.QueueDoesNotExistException;
 
 import de.idealo.spring.stream.binder.sqs.SqsMessageHandlerBinder;
 import de.idealo.spring.stream.binder.sqs.inbound.SqsInboundChannelAdapter;
@@ -35,7 +37,7 @@ class SqsBinderHealthIndicatorTest {
     private SqsMessageHandlerBinder sqsMessageHandlerBinder;
 
     @Mock
-    private AmazonSQSAsync amazonSQS;
+    private SqsAsyncClient amazonSQS;
 
     @Mock
     private SqsInboundChannelAdapter adapter;
@@ -45,7 +47,7 @@ class SqsBinderHealthIndicatorTest {
 
     @BeforeEach
     void setUp() {
-        lenient().when(sqsMessageHandlerBinder.getAmazonSQS()).thenReturn(amazonSQS);
+        lenient().when(sqsMessageHandlerBinder.getSqsAsyncClient()).thenReturn(amazonSQS);
         when(sqsMessageHandlerBinder.getAdapters()).thenReturn(Collections.singletonList(adapter));
     }
 
@@ -53,7 +55,7 @@ class SqsBinderHealthIndicatorTest {
     void reportsTrueWhenAllConfiguredQueuesAreRunning() {
         when(adapter.getQueues()).thenReturn(new String[] { "queue1", "queue2" });
         when(adapter.isRunning(any())).thenReturn(true);
-        when(amazonSQS.getQueueUrl(anyString())).thenReturn(new GetQueueUrlResult().withQueueUrl("http://queue.url"));
+        when(amazonSQS.getQueueUrl(any(GetQueueUrlRequest.class))).thenReturn(CompletableFuture.completedFuture(GetQueueUrlResponse.builder().queueUrl("http://queue.url").build()));
 
         Health.Builder builder = new Health.Builder();
 
@@ -66,9 +68,7 @@ class SqsBinderHealthIndicatorTest {
     void reportsTrueWhenAllConfiguredQueueUrlsAreRunning() {
         when(adapter.getQueues()).thenReturn(new String[] { "https://sqs.eu-central-1.amazonaws.com/1234567890/queue1", "https://sqs.eu-central-1.amazonaws.com/1234567890/queue2" });
         when(adapter.isRunning(any())).thenReturn(true);
-        when(amazonSQS.getQueueAttributes(anyString(), anyList())).thenReturn(new GetQueueAttributesResult().withAttributes(new HashMap<String, String>() {{
-            put("CreatedTimestamp", "1234567890");
-        }}));
+        when(amazonSQS.getQueueAttributes(any(GetQueueAttributesRequest.class))).thenReturn(CompletableFuture.completedFuture(GetQueueAttributesResponse.builder().attributes(Map.of(QueueAttributeName.CREATED_TIMESTAMP, "1234567890")).build()));
 
         Health.Builder builder = new Health.Builder();
 
@@ -92,7 +92,7 @@ class SqsBinderHealthIndicatorTest {
     @Test
     void reportsFalseIfAtLeastOneConfiguredQueueIsNotRunning() {
         when(adapter.getQueues()).thenReturn(new String[] { "queue1", "queue2" });
-        when(amazonSQS.getQueueUrl(anyString())).thenReturn(new GetQueueUrlResult().withQueueUrl("http://queue.url"));
+        when(amazonSQS.getQueueUrl(any(GetQueueUrlRequest.class))).thenReturn(CompletableFuture.completedFuture(GetQueueUrlResponse.builder().queueUrl("http://queue.url").build()));
         when(adapter.isRunning("queue1")).thenReturn(true);
         when(adapter.isRunning("queue2")).thenReturn(false);
 
@@ -109,7 +109,7 @@ class SqsBinderHealthIndicatorTest {
     void reportsFalseIfAtLeastOneConfiguredQueueDoesNotExist() {
         when(adapter.getQueues()).thenReturn(new String[] { "queue1", "queue2" });
         when(adapter.isRunning(any())).thenReturn(true);
-        when(amazonSQS.getQueueUrl(anyString())).thenThrow(QueueDoesNotExistException.class);
+        when(amazonSQS.getQueueUrl(any(GetQueueUrlRequest.class))).thenThrow(QueueDoesNotExistException.class);
 
         Health.Builder builder = new Health.Builder();
 
@@ -124,7 +124,7 @@ class SqsBinderHealthIndicatorTest {
     void reportsFalseIfAtLeastOneConfiguredQueueIsNotReachable() {
         when(adapter.getQueues()).thenReturn(new String[] { "queue1", "queue2" });
         when(adapter.isRunning(any())).thenReturn(true);
-        when(amazonSQS.getQueueUrl(anyString())).thenThrow(SdkClientException.class);
+        when(amazonSQS.getQueueUrl(any(GetQueueUrlRequest.class))).thenThrow(SdkClientException.class);
 
         Health.Builder builder = new Health.Builder();
 
@@ -139,7 +139,7 @@ class SqsBinderHealthIndicatorTest {
     void reportsFalseIfAtLeastOneConfiguredQueueUrlDoesNotExist() {
         when(adapter.getQueues()).thenReturn(new String[] { "https://sqs.eu-central-1.amazonaws.com/1234567890/queue1", "https://sqs.eu-central-1.amazonaws.com/1234567890/queue2" });
         when(adapter.isRunning(any())).thenReturn(true);
-        when(amazonSQS.getQueueAttributes(anyString(), anyList())).thenThrow(QueueDoesNotExistException.class);
+        when(amazonSQS.getQueueAttributes(any(GetQueueAttributesRequest.class))).thenThrow(QueueDoesNotExistException.class);
 
         Health.Builder builder = new Health.Builder();
 
@@ -154,7 +154,7 @@ class SqsBinderHealthIndicatorTest {
     void reportsFalseIfAtLeastOneConfiguredQueueUrlIsNotReachable() {
         when(adapter.getQueues()).thenReturn(new String[] { "https://sqs.eu-central-1.amazonaws.com/12345678901/queue1", "https://sqs.eu-central-1.amazonaws.com/12345678901/queue2" });
         when(adapter.isRunning(any())).thenReturn(true);
-        when(amazonSQS.getQueueAttributes(anyString(), anyList())).thenThrow(SdkClientException.class);
+        when(amazonSQS.getQueueAttributes(any(GetQueueAttributesRequest.class))).thenThrow(SdkClientException.class);
 
         Health.Builder builder = new Health.Builder();
 

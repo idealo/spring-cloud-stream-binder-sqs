@@ -1,7 +1,5 @@
 package de.idealo.spring.stream.binder.sqs.health;
 
-import static java.util.Collections.singletonList;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -11,8 +9,10 @@ import org.springframework.boot.actuate.health.AbstractHealthIndicator;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.util.Assert;
 
-import com.amazonaws.SdkClientException;
-import com.amazonaws.services.sqs.model.QueueDoesNotExistException;
+import software.amazon.awssdk.core.exception.SdkClientException;
+import software.amazon.awssdk.services.sqs.model.GetQueueAttributesRequest;
+import software.amazon.awssdk.services.sqs.model.GetQueueUrlRequest;
+import software.amazon.awssdk.services.sqs.model.QueueDoesNotExistException;
 
 import de.idealo.spring.stream.binder.sqs.SqsMessageHandlerBinder;
 import de.idealo.spring.stream.binder.sqs.inbound.SqsInboundChannelAdapter;
@@ -63,9 +63,9 @@ public class SqsBinderHealthIndicator extends AbstractHealthIndicator {
     private boolean isReachable(String queueName) {
         try {
             if (isValidQueueUrl(queueName)) {
-                this.sqsMessageHandlerBinder.getAmazonSQS().getQueueAttributes(queueName, singletonList("CreatedTimestamp"));
+                this.sqsMessageHandlerBinder.getSqsAsyncClient().getQueueAttributes(GetQueueAttributesRequest.builder().queueUrl(queueName).attributeNamesWithStrings("CreatedTimestamp").build()).get();
             } else {
-                this.sqsMessageHandlerBinder.getAmazonSQS().getQueueUrl(queueName);
+                this.sqsMessageHandlerBinder.getSqsAsyncClient().getQueueUrl(GetQueueUrlRequest.builder().queueName(queueName).build()).get();
             }
             return true;
         } catch (QueueDoesNotExistException e) {
@@ -73,6 +73,9 @@ public class SqsBinderHealthIndicator extends AbstractHealthIndicator {
             return false;
         } catch (SdkClientException e) {
             LOGGER.error("Queue '{}' is not reachable", queueName, e);
+            return false;
+        } catch (Exception e) {
+            LOGGER.error("Health check failed for queue '{}'", queueName, e);
             return false;
         }
     }
