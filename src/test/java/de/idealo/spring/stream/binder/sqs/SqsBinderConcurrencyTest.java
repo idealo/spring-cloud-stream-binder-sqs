@@ -1,42 +1,31 @@
 package de.idealo.spring.stream.binder.sqs;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
 import static org.testcontainers.containers.localstack.LocalStackContainer.Service.SQS;
 
 import java.time.Duration;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.actuate.health.HealthEndpoint;
-import org.springframework.boot.actuate.health.Status;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Bean;
-import org.springframework.messaging.support.MessageBuilder;
 import org.testcontainers.containers.localstack.LocalStackContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
-import com.amazonaws.services.sqs.AmazonSQSAsync;
-import com.amazonaws.services.sqs.AmazonSQSAsyncClientBuilder;
-import com.amazonaws.services.sqs.model.Message;
-import com.amazonaws.services.sqs.model.SendMessageRequest;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 import reactor.test.StepVerifier;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.GetQueueUrlRequest;
+import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 
 @Testcontainers
 @SpringBootTest(properties = {
@@ -57,8 +46,8 @@ class SqsBinderConcurrencyTest {
 
     private static final Sinks.Many<String> inputSink = Sinks.many().multicast().onBackpressureBuffer();
 
-    @SpyBean
-    private AmazonSQSAsync amazonSQS;
+    @Autowired
+    private SqsAsyncClient amazonSQS;
 
     @BeforeAll
     static void beforeAll() throws Exception {
@@ -66,11 +55,11 @@ class SqsBinderConcurrencyTest {
     }
 
     @Test
-    void shouldPassMessageToConsumer() {
-        String queueUrl = amazonSQS.getQueueUrl("concurrentQueue").getQueueUrl();
+    void shouldPassMessageToConsumer() throws ExecutionException, InterruptedException {
+        String queueUrl = amazonSQS.getQueueUrl(GetQueueUrlRequest.builder().queueName("concurrentQueue").build()).get().queueUrl();
 
-        amazonSQS.sendMessage(queueUrl, "delayedMessage");
-        amazonSQS.sendMessage(queueUrl, "processedMessage");
+        amazonSQS.sendMessage(SendMessageRequest.builder().queueUrl(queueUrl).messageBody("delayedMessage").build());
+        amazonSQS.sendMessage(SendMessageRequest.builder().queueUrl(queueUrl).messageBody("processedMessage").build());
 
         StepVerifier.create(inputSink.asFlux())
                 .assertNext(message -> {
@@ -87,17 +76,17 @@ class SqsBinderConcurrencyTest {
     static class AwsConfig {
 
         @Bean
-        AmazonSQSAsync amazonSQS() {
-            return AmazonSQSAsyncClientBuilder.standard()
-                    .withEndpointConfiguration(localStack.getEndpointConfiguration(SQS))
-                    .withCredentials(localStack.getDefaultCredentialsProvider())
+        SqsAsyncClient amazonSQS() {
+            return SqsAsyncClient.builder()
+                    .endpointOverride(localStack.getEndpointOverride(SQS))
+                    .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(localStack.getAccessKey(), localStack.getSecretKey())))
                     .build();
         }
 
         @Bean
         Consumer<String> input() {
             return (input) -> {
-                if("delayedMessage".equals(input)) {
+                if ("delayedMessage".equals(input)) {
                     try {
                         Thread.sleep(1000L);
                     } catch (InterruptedException e) {

@@ -7,27 +7,27 @@ public class SqsConsumerProperties {
 
     /**
      * Maximum number of messages to retrieve with one poll to SQS.
-     * Must be a number between 1 and 10.
+     * Must be a number between 1 and 10. Default is 10.
      *
      * {@link io.awspring.cloud.sqs.listener.SqsContainerOptionsBuilder#maxMessagesPerPoll(int)}
      */
-    private Integer maxNumberOfMessages;
+    private Integer maxNumberOfMessages = 10;
 
     /**
      * The duration in seconds that polled messages are hidden from subsequent poll requests
-     * after having been retrieved.
+     * after having been retrieved. Default is 30 seconds.
      *
      * {@link io.awspring.cloud.sqs.listener.SqsContainerOptionsBuilder#messageVisibility(Duration)}
      */
-    private Integer visibilityTimeout;
+    private Integer visibilityTimeout = 30;
 
     /**
      * The duration in seconds that the system will wait for new messages to arrive when polling.
-     * Uses the Amazon SQS long polling feature. The value should be between 1 and 20.
+     * Uses the Amazon SQS long polling feature. The value should be between 1 and 20. Default is 10.
      *
      * {@link io.awspring.cloud.sqs.listener.SqsContainerOptionsBuilder#pollTimeout(Duration)}
      */
-    private Integer waitTimeout;
+    private Integer waitTimeout = 10;
 
     /**
      * Whether the incoming message has the SNS format and should be deserialized automatically.

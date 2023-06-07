@@ -53,8 +53,6 @@ public class SqsMessageHandlerBinder
     protected MessageHandler createProducerMessageHandler(ProducerDestination destination, ExtendedProducerProperties<SqsProducerProperties> producerProperties, MessageChannel errorChannel) throws Exception {
         SqsMessageHandler sqsMessageHandler = new SqsMessageHandler(sqsAsyncClient);
         sqsMessageHandler.setQueue(destination.getName());
-        // TODO: what about error channel
-        //sqsMessageHandler.setFailureChannel(errorChannel);
         sqsMessageHandler.setBeanFactory(getBeanFactory());
 
         sqsMessageHandler.setDelayExpressionString(String.format("headers.get('%s')", SqsHeaders.DELAY));

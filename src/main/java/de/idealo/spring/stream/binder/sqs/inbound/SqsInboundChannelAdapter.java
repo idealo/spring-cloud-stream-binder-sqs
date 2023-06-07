@@ -20,8 +20,8 @@ import io.awspring.cloud.sqs.listener.SqsContainerOptions;
 import io.awspring.cloud.sqs.listener.SqsMessageListenerContainer;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
-@Component
-@Scope("prototype")
+//@Component
+//@Scope("prototype")
 public class SqsInboundChannelAdapter extends MessageProducerSupport {
 
     private final SqsMessageListenerContainerFactory.Builder<Object> sqsMessageListenerContainerFactory =

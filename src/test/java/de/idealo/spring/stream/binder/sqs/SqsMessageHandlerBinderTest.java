@@ -9,7 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cloud.stream.binder.ExtendedConsumerProperties;
 
-import com.amazonaws.services.sqs.AmazonSQSAsync;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import de.idealo.spring.stream.binder.sqs.properties.SqsConsumerProperties;
 import de.idealo.spring.stream.binder.sqs.properties.SqsExtendedBindingProperties;
@@ -20,7 +20,7 @@ import de.idealo.spring.stream.binder.sqs.provisioning.SqsStreamProvisioner;
 class SqsMessageHandlerBinderTest {
 
     @Mock
-    private AmazonSQSAsync amazonSQS;
+    private SqsAsyncClient amazonSQS;
 
     private SqsMessageHandlerBinder sqsMessageHandlerBinder;
 

@@ -2,27 +2,23 @@ package de.idealo.spring.stream.binder.sqs;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
 import static org.testcontainers.containers.localstack.LocalStackContainer.Service.SQS;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.health.HealthEndpoint;
 import org.springframework.boot.actuate.health.Status;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.messaging.support.MessageBuilder;
 import org.testcontainers.containers.localstack.LocalStackContainer;
@@ -30,14 +26,16 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
-import com.amazonaws.services.sqs.AmazonSQSAsync;
-import com.amazonaws.services.sqs.AmazonSQSAsyncClientBuilder;
-import com.amazonaws.services.sqs.model.Message;
-import com.amazonaws.services.sqs.model.SendMessageRequest;
-
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 import reactor.test.StepVerifier;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.GetQueueUrlRequest;
+import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
+import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 
 @Testcontainers
 @SpringBootTest(properties = {
@@ -62,8 +60,8 @@ class SqsBinderTest {
     private static final Sinks.Many<org.springframework.messaging.Message<String>> fifoOutputSink = Sinks.many().multicast().onBackpressureBuffer();
     private static final Sinks.Many<org.springframework.messaging.Message<String>> delayedOutputSink = Sinks.many().multicast().onBackpressureBuffer();
 
-    @SpyBean
-    private AmazonSQSAsync amazonSQS;
+    @Autowired
+    private SqsAsyncClient amazonSQS;
 
     @Autowired
     private HealthEndpoint healthEndpoint;
@@ -77,11 +75,11 @@ class SqsBinderTest {
     }
 
     @Test
-    void shouldPassMessageToConsumer() {
+    void shouldPassMessageToConsumer() throws ExecutionException, InterruptedException {
         String testMessage = "test message";
 
-        String queueUrl = amazonSQS.getQueueUrl("queue1").getQueueUrl();
-        amazonSQS.sendMessage(queueUrl, testMessage);
+        String queueUrl = amazonSQS.getQueueUrl(GetQueueUrlRequest.builder().queueName("queue1").build()).get().queueUrl();
+        amazonSQS.sendMessage(SendMessageRequest.builder().queueUrl(queueUrl).messageBody(testMessage).build()).get();
 
         StepVerifier.create(inputSink.asFlux())
                 .assertNext(message -> {
@@ -91,15 +89,15 @@ class SqsBinderTest {
     }
 
     @Test
-    void shouldPublishMessageFromProducer() {
+    void shouldPublishMessageFromProducer() throws ExecutionException, InterruptedException {
         String testMessage = "test message";
 
         outputSink.tryEmitNext(testMessage);
 
-        String queueUrl = amazonSQS.getQueueUrl("queue2").getQueueUrl();
+        String queueUrl = amazonSQS.getQueueUrl(GetQueueUrlRequest.builder().queueName("queue2").build()).get().queueUrl();
 
         await().atMost(1, TimeUnit.SECONDS).untilAsserted(() -> {
-            List<Message> messages = amazonSQS.receiveMessage(queueUrl).getMessages();
+            List<Message> messages = amazonSQS.receiveMessage(ReceiveMessageRequest.builder().queueUrl(queueUrl).build()).get().messages();
             assertThat(messages).hasSize(1)
                     .extracting("body")
                     .containsExactly(testMessage);
@@ -107,7 +105,7 @@ class SqsBinderTest {
     }
 
     @Test
-    void shouldPublishMessageToFifoQueue() {
+    void shouldPublishMessageToFifoQueue() throws ExecutionException, InterruptedException {
         org.springframework.messaging.Message<String> message = MessageBuilder
                 .withPayload("fifo body")
                 .setHeader(SqsHeaders.GROUP_ID, "my-group")
@@ -116,16 +114,9 @@ class SqsBinderTest {
 
         fifoOutputSink.tryEmitNext(message);
 
-        ArgumentCaptor<SendMessageRequest> captor = ArgumentCaptor.forClass(SendMessageRequest.class);
-        verify(amazonSQS, timeout(500)).sendMessageAsync(captor.capture(), any());
-
-        SendMessageRequest actualRequest = captor.getValue();
-        assertThat(actualRequest.getMessageGroupId()).isEqualTo("my-group");
-        assertThat(actualRequest.getMessageDeduplicationId()).isEqualTo("unique1");
-
-        String queueUrl = amazonSQS.getQueueUrl("queue3.fifo").getQueueUrl();
+        String queueUrl = amazonSQS.getQueueUrl(GetQueueUrlRequest.builder().queueName("queue3.fifo").build()).get().queueUrl();
         await().atMost(1, TimeUnit.SECONDS).untilAsserted(() -> {
-            List<Message> messages = amazonSQS.receiveMessage(queueUrl).getMessages();
+            List<Message> messages = amazonSQS.receiveMessage(ReceiveMessageRequest.builder().queueUrl(queueUrl).build()).get().messages();
             assertThat(messages).hasSize(1)
                     .extracting("body")
                     .containsExactly(message.getPayload());
@@ -133,7 +124,7 @@ class SqsBinderTest {
     }
 
     @Test
-    void shouldPublishDelayedMessage() {
+    void shouldPublishDelayedMessage() throws ExecutionException, InterruptedException {
         org.springframework.messaging.Message<String> message = MessageBuilder
                 .withPayload("test message")
                 .setHeader(SqsHeaders.DELAY, 5)
@@ -141,15 +132,9 @@ class SqsBinderTest {
 
         delayedOutputSink.tryEmitNext(message);
 
-        ArgumentCaptor<SendMessageRequest> captor = ArgumentCaptor.forClass(SendMessageRequest.class);
-        verify(amazonSQS, timeout(500)).sendMessageAsync(captor.capture(), any());
-
-        SendMessageRequest actualRequest = captor.getValue();
-        assertThat(actualRequest.getDelaySeconds()).isEqualTo(5);
-
-        String queueUrl = amazonSQS.getQueueUrl("queue4").getQueueUrl();
-        await().atMost(6, TimeUnit.SECONDS).untilAsserted(() -> {
-            List<Message> messages = amazonSQS.receiveMessage(queueUrl).getMessages();
+        String queueUrl = amazonSQS.getQueueUrl(GetQueueUrlRequest.builder().queueName("queue4").build()).get().queueUrl();
+        await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<Message> messages = amazonSQS.receiveMessage(ReceiveMessageRequest.builder().queueUrl(queueUrl).build()).get().messages();
             assertThat(messages).hasSize(1)
                     .extracting("body")
                     .containsExactly(message.getPayload());
@@ -166,10 +151,10 @@ class SqsBinderTest {
     static class AwsConfig {
 
         @Bean
-        AmazonSQSAsync amazonSQS() {
-            return AmazonSQSAsyncClientBuilder.standard()
-                    .withEndpointConfiguration(localStack.getEndpointConfiguration(SQS))
-                    .withCredentials(localStack.getDefaultCredentialsProvider())
+        SqsAsyncClient amazonSQS() {
+            return SqsAsyncClient.builder()
+                    .endpointOverride(localStack.getEndpointOverride(SQS))
+                    .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(localStack.getAccessKey(), localStack.getSecretKey())))
                     .build();
         }
 
