@@ -5,10 +5,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import org.springframework.integration.aws.support.AwsHeaders;
 import org.springframework.integration.endpoint.MessageProducerSupport;
 import org.springframework.messaging.Message;
-import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.support.GenericMessage;
 import org.springframework.util.Assert;
 
@@ -52,7 +50,7 @@ public class SqsInboundChannelAdapter extends MessageProducerSupport {
             this.sqsMessageListenerContainerFactory.configure(sqsContainerOptionsBuilder ->
                     sqsContainerOptionsBuilder.fromBuilder(this.sqsContainerOptions.toBuilder()));
         }
-        this.sqsMessageListenerContainerFactory.messageListener(new SqsInboundChannelAdapter.IntegrationMessageListener());
+        this.sqsMessageListenerContainerFactory.messageListener(new IntegrationMessageListener());
 
         for (int i = 0; i < concurrency; i++) {
             final SqsMessageListenerContainer<Object> container = this.sqsMessageListenerContainerFactory.build().createContainer(this.queues);
@@ -82,26 +80,21 @@ public class SqsInboundChannelAdapter extends MessageProducerSupport {
         return Arrays.copyOf(this.queues, this.queues.length);
     }
 
-
     private class IntegrationMessageListener implements MessageListener<Object> {
+
         IntegrationMessageListener() {
         }
 
         @Override
         public void onMessage(Message<Object> message) {
-            MessageHeaders headers = message.getHeaders();
-            Message<?> messageToSend = getMessageBuilderFactory().fromMessage(message)
-                    .removeHeaders("LogicalResourceId", "MessageId", "ReceiptHandle", "Acknowledgment")
-                    .setHeader(AwsHeaders.MESSAGE_ID, headers.get("MessageId"))
-                    .setHeader("aws_receiptHandle", headers.get("ReceiptHandle"))
-                    .setHeader("aws_receivedQueue", headers.get("LogicalResourceId"))
-                    .setHeader("aws_acknowledgment", headers.get("Acknowledgment")).build();
-            sendMessage(messageToSend);
+            // strips SNS notification json, leaving the actual message payload as SQS message
+            sendMessage(getMessageBuilderFactory().fromMessage(message).build());
         }
 
         @Override
         public void onMessage(Collection<Message<Object>> messages) {
             onMessage(new GenericMessage<>(messages));
         }
+
     }
 }
