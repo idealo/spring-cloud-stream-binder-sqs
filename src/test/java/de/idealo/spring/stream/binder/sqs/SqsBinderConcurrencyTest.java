@@ -29,8 +29,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 
 @Testcontainers
 @SpringBootTest(properties = {
-        "cloud.aws.stack.auto=false",
-        "cloud.aws.region.static=eu-central-1",
+        "spring.cloud.aws.region.static=eu-central-1",
         "spring.cloud.stream.bindings.input-in-0.destination=concurrentQueue",
         "spring.cloud.stream.sqs.bindings.input-in-0.consumer.snsFanout=false",
         "spring.cloud.stream.sqs.bindings.input-in-0.consumer.maxNumberOfMessages=1",
