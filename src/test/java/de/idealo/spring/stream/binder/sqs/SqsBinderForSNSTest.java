@@ -31,6 +31,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 
 @Testcontainers
 @SpringBootTest(properties = {
+        "aws.region=eu-central-1",
         "spring.cloud.aws.region.static=eu-central-1",
         "spring.cloud.stream.bindings.input-in-0.destination=queue1",
         "spring.cloud.stream.bindings.function.definition=input"
