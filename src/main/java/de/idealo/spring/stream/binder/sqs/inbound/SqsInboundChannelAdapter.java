@@ -5,13 +5,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import org.springframework.context.annotation.Scope;
 import org.springframework.integration.aws.support.AwsHeaders;
 import org.springframework.integration.endpoint.MessageProducerSupport;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.support.GenericMessage;
-import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import io.awspring.cloud.sqs.config.SqsMessageListenerContainerFactory;
@@ -20,8 +18,6 @@ import io.awspring.cloud.sqs.listener.SqsContainerOptions;
 import io.awspring.cloud.sqs.listener.SqsMessageListenerContainer;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
-//@Component
-//@Scope("prototype")
 public class SqsInboundChannelAdapter extends MessageProducerSupport {
 
     private final SqsMessageListenerContainerFactory.Builder<Object> sqsMessageListenerContainerFactory =
