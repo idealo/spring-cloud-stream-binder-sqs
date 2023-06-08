@@ -25,6 +25,7 @@ import reactor.core.publisher.Sinks;
 import reactor.test.StepVerifier;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.GetQueueUrlRequest;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
@@ -90,6 +91,7 @@ class SqsBinderForSNSTest {
             return SqsAsyncClient.builder()
                     .endpointOverride(localStack.getEndpointOverride(SQS))
                     .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(localStack.getAccessKey(), localStack.getSecretKey())))
+                    .region(Region.EU_CENTRAL_1)
                     .build();
         }
 
