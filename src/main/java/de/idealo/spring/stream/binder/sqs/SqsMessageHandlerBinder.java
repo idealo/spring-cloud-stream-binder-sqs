@@ -69,6 +69,7 @@ public class SqsMessageHandlerBinder
                         .maxMessagesPerPoll(properties.getExtension().getMaxNumberOfMessages())
                         .messageVisibility(Duration.ofSeconds(properties.getExtension().getVisibilityTimeout()))
                         .pollTimeout(Duration.ofSeconds(properties.getExtension().getWaitTimeout()))
+                        .listenerShutdownTimeout(Duration.ofSeconds(properties.getExtension().getQueueStopTimeout()))
                         .queueNotFoundStrategy(QueueNotFoundStrategy.FAIL)
                         .build();
         SqsInboundChannelAdapter adapter = new SqsInboundChannelAdapter(sqsAsyncClient, destination.getName());

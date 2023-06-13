@@ -24,8 +24,9 @@ the AWS Simple Queue Service (SQS).
 | 3.0.0                          | 3.1.x       | 3.0.x            | 2022.0.3             | 2.x     | 17                    |
 
 Changes in 3.0:
-* removed consumer configuration for **messageDeletionPolicy**: the default behaviour is now that Messages will be acknowledged when message processing is successful.
-* removed consumer configuration for **queueStopTimeout**
+
+* removed consumer configuration for **messageDeletionPolicy**: the default behaviour is now that Messages will be
+  acknowledged when message processing is successful.
 
 ## Usage
 
@@ -42,6 +43,8 @@ You may also provide additional configuration options:
       after having been retrieved.
     - **waitTimeout** - The duration in seconds that the system will wait for new messages to arrive when polling. Uses
       the Amazon SQS long polling feature. The value should be between 1 and 20.
+    - **queueStopTimeout** - The number of milliseconds that the queue worker is given to gracefully finish its work on
+      shutdown before interrupting the current thread. Default value is 10 seconds.
     - **snsFanout** - Whether the incoming message has the SNS format and should be deserialized automatically. Defaults
       to true.
 

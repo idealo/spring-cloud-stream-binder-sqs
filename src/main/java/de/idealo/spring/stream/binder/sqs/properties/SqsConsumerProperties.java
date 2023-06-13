@@ -30,6 +30,14 @@ public class SqsConsumerProperties {
     private Integer waitTimeout = 10;
 
     /**
+     * The number of milliseconds that the queue worker is given to gracefully finish its work on shutdown before
+     * interrupting the current thread. Default value is 10 seconds.
+     *
+     * {@link io.awspring.cloud.sqs.listener.SqsContainerOptionsBuilder#listenerShutdownTimeout(Duration)}
+     */
+    private Long queueStopTimeout = 10L;
+
+    /**
      * Whether the incoming message has the SNS format and should be deserialized automatically.
      * Defaults to true.
      */
@@ -65,5 +73,13 @@ public class SqsConsumerProperties {
 
     public void setSnsFanout(boolean snsFanout) {
         this.snsFanout = snsFanout;
+    }
+
+    public Long getQueueStopTimeout() {
+        return queueStopTimeout;
+    }
+
+    public void setQueueStopTimeout(final Long queueStopTimeout) {
+        this.queueStopTimeout = queueStopTimeout;
     }
 }
