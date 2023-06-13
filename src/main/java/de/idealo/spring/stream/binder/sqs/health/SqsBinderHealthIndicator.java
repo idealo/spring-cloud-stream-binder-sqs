@@ -63,9 +63,13 @@ public class SqsBinderHealthIndicator extends AbstractHealthIndicator {
     private boolean isReachable(String queueName) {
         try {
             if (isValidQueueUrl(queueName)) {
-                this.sqsMessageHandlerBinder.getSqsAsyncClient().getQueueAttributes(GetQueueAttributesRequest.builder().queueUrl(queueName).attributeNamesWithStrings("CreatedTimestamp").build()).get();
+                this.sqsMessageHandlerBinder.getSqsAsyncClient()
+                        .getQueueAttributes(
+                                GetQueueAttributesRequest.builder().queueUrl(queueName).attributeNamesWithStrings("CreatedTimestamp").build()).get();
             } else {
-                this.sqsMessageHandlerBinder.getSqsAsyncClient().getQueueUrl(GetQueueUrlRequest.builder().queueName(queueName).build()).get();
+                this.sqsMessageHandlerBinder.getSqsAsyncClient()
+                        .getQueueUrl(
+                                GetQueueUrlRequest.builder().queueName(queueName).build()).get();
             }
             return true;
         } catch (QueueDoesNotExistException e) {
