@@ -66,10 +66,10 @@ public class SqsMessageHandlerBinder
     protected MessageProducer createConsumerEndpoint(ConsumerDestination destination, String group, ExtendedConsumerProperties<SqsConsumerProperties> properties) throws Exception {
         final SqsContainerOptions sqsContainerOptions =
                 SqsContainerOptions.builder()
-                        .maxMessagesPerPoll(properties.getExtension().getMaxNumberOfMessages())
+                        .maxMessagesPerPoll(properties.getExtension().getMaxMessagesPerPoll())
                         .messageVisibility(Duration.ofSeconds(properties.getExtension().getVisibilityTimeout()))
-                        .pollTimeout(Duration.ofSeconds(properties.getExtension().getWaitTimeout()))
-                        .listenerShutdownTimeout(Duration.ofSeconds(properties.getExtension().getQueueStopTimeout()))
+                        .pollTimeout(Duration.ofSeconds(properties.getExtension().getPollTimeout()))
+                        .listenerShutdownTimeout(Duration.ofSeconds(properties.getExtension().getListenerShutdownTimeout()))
                         .queueNotFoundStrategy(QueueNotFoundStrategy.FAIL)
                         .build();
         SqsInboundChannelAdapter adapter = new SqsInboundChannelAdapter(sqsAsyncClient, destination.getName());

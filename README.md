@@ -18,15 +18,21 @@ the AWS Simple Queue Service (SQS).
 
 ## Compatabilty
 
-| spring-cloud-stream-binder-sqs | spring-boot | spring-cloud-aws | spring.cloud-version | aws sdk | java compiler/runtime |
-|--------------------------------|-------------|------------------|----------------------|---------|-----------------------|
-| 1.9.0                          | 2.7.x       | 2.4.x            | 2021.0.5             | 1.x     | 8                     |
-| 3.0.0                          | 3.1.x       | 3.0.x            | 2022.0.3             | 2.x     | 17                    |
+| spring-cloud-stream-binder-sqs | spring-boot | spring-cloud-aws | spring-cloud | aws sdk | java compiler/runtime |
+|--------------------------------|-------------|------------------|--------------|---------|-----------------------|
+| 1.9.0                          | 2.7.x       | 2.4.x            | 2021.0.5     | 1.x     | 8                     |
+| 3.0.0                          | 3.1.x       | 3.0.x            | 2022.0.3     | 2.x     | 17                    |
 
 Changes in 3.0:
 
 * removed consumer configuration for **messageDeletionPolicy**: the default behaviour is now that Messages will be
   acknowledged when message processing is successful.
+* renamed consumer configuration for **maxNumberOfMessages** to **maxMessagesPerPoll** to align with the naming in
+  spring-cloud-aws-sqs. The old property is deprecated but still supported for now.
+* renamed consumer configuration for **waitTimeout** to **pollTimeout** to align with the naming in
+  spring-cloud-aws-sqs. The old property is deprecated but still supported for now.
+* renamed consumer configuration for **queueStopTimeout** to **listenerShutdownTimeout** to align with the naming in
+  spring-cloud-aws-sqs. The old property is deprecated but still supported for now.
 
 ## Usage
 
@@ -37,13 +43,14 @@ available queue in the account.
 You may also provide additional configuration options:
 
 - **Consumers**
-    - **maxNumberOfMessages** - Maximum number of messages to retrieve with one poll to SQS. Must be a number between 1
+    - **maxMessagesPerPoll** - Maximum number of messages to retrieve with one poll to SQS. Must be a number between 1
       and 10.
     - **visibilityTimeout** - The duration in seconds that polled messages are hidden from subsequent poll requests
       after having been retrieved.
-    - **waitTimeout** - The duration in seconds that the system will wait for new messages to arrive when polling. Uses
+    - **pollTimeout** - The duration in seconds that the system will wait for new messages to arrive when polling. Uses
       the Amazon SQS long polling feature. The value should be between 1 and 20.
-    - **queueStopTimeout** - The number of milliseconds that the queue worker is given to gracefully finish its work on
+    - **listenerShutdownTimeout** - The number of milliseconds that the queue worker is given to gracefully finish its
+      work on
       shutdown before interrupting the current thread. Default value is 10 seconds.
     - **snsFanout** - Whether the incoming message has the SNS format and should be deserialized automatically. Defaults
       to true.
@@ -121,7 +128,7 @@ spring:
         bindings:
           someFunction-in-0:
             consumer:
-              maxNumberOfMessages: 5
+              maxMessagesPerPoll: 5
       bindings:
         someFunction-in-0:
           destination: input-queue-name
