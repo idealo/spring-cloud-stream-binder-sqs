@@ -11,7 +11,7 @@ the AWS Simple Queue Service (SQS).
     <dependency>
         <groupId>de.idealo.spring</groupId>
         <artifactId>spring-cloud-stream-binder-sqs</artifactId>
-        <version>1.9.0</version>
+        <version>3.0.0</version>
     </dependency>
 </dependencies>
 ```
@@ -23,7 +23,7 @@ the AWS Simple Queue Service (SQS).
 | 1.9.0                          | 2.7.x       | 2.4.x            | 2021.0.5     | 1.x     | 8                     |
 | 3.0.0                          | 3.1.x       | 3.0.x            | 2022.0.3     | 2.x     | 17                    |
 
-Changes in 3.0:
+Changes in 3.0.0:
 
 * removed consumer configuration for **messageDeletionPolicy**: the default behaviour is now that Messages will be
   acknowledged when message processing is successful.
