@@ -2,6 +2,7 @@ package de.idealo.spring.stream.binder.sqs.health;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.concurrent.ExecutionException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,8 +79,11 @@ public class SqsBinderHealthIndicator extends AbstractHealthIndicator {
         } catch (SdkClientException e) {
             LOGGER.error("Queue '{}' is not reachable", queueName, e);
             return false;
-        } catch (Exception e) {
+        } catch (ExecutionException e) {
             LOGGER.error("Health check failed for queue '{}'", queueName, e);
+            return false;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             return false;
         }
     }
