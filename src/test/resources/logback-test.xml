@@ -12,6 +12,7 @@
     </appender>
 
     <logger name="de.idealo.spring.stream.binder.sqs" level="debug"/>
+    <logger name="io.awspring.cloud.sqs.listener.source" level="off"/>
 
     <root level="warn">
         <appender-ref ref="STDOUT" />
