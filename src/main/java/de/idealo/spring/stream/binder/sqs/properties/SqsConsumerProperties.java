@@ -1,45 +1,43 @@
 package de.idealo.spring.stream.binder.sqs.properties;
 
-import io.awspring.cloud.messaging.listener.SqsMessageDeletionPolicy;
+
+import java.time.Duration;
 
 public class SqsConsumerProperties {
 
     /**
-     * Maximum number of messages to retrieve with one poll to SQS.
-     * Must be a number between 1 and 10.
+     * Set the number of messages that should be returned per poll.
+     * If a value greater than 10 is provided, the result of multiple polls will be combined.
+     * Default is 10.
      *
-     * {@link io.awspring.cloud.messaging.listener.SimpleMessageListenerContainer#setMaxNumberOfMessages(Integer)}
+     * {@link io.awspring.cloud.sqs.listener.SqsContainerOptionsBuilder#maxMessagesPerPoll(int)}
      */
-    private Integer maxNumberOfMessages;
+    private Integer maxMessagesPerPoll = 10;
+
 
     /**
      * The duration in seconds that polled messages are hidden from subsequent poll requests
-     * after having been retrieved.
+     * after having been retrieved. Default is 30 seconds.
      *
-     * {@link io.awspring.cloud.messaging.config.SimpleMessageListenerContainerFactory#setVisibilityTimeout(Integer)}
+     * {@link io.awspring.cloud.sqs.listener.SqsContainerOptionsBuilder#messageVisibility(Duration)}
      */
-    private Integer visibilityTimeout;
+    private Integer visibilityTimeout = 30;
 
     /**
      * The duration in seconds that the system will wait for new messages to arrive when polling.
-     * Uses the Amazon SQS long polling feature. The value should be between 1 and 20.
+     * The value should be between 1 and 20. Default is 10.
      *
-     * {@link io.awspring.cloud.messaging.config.SimpleMessageListenerContainerFactory#setWaitTimeOut(Integer)}
+     * {@link io.awspring.cloud.sqs.listener.SqsContainerOptionsBuilder#pollTimeout(Duration)}
      */
-    private Integer waitTimeout;
+    private Integer pollTimeout = 10;
 
     /**
-     * The number of milliseconds that the queue worker is given to gracefully finish its work on shutdown before
-     * interrupting the current thread. Default value is 20000 milliseconds (20 seconds).
+     * The number of milliseconds that the listener is given to gracefully finish its work on shutdown before
+     * interrupting the current thread. Default value is 10 seconds.
      *
-     * {@link io.awspring.cloud.messaging.config.SimpleMessageListenerContainerFactory#setQueueStopTimeout(Long)}
+     * {@link io.awspring.cloud.sqs.listener.SqsContainerOptionsBuilder#listenerShutdownTimeout(Duration)}
      */
-    private Long queueStopTimeout;
-
-    /**
-     * The deletion policy for messages that are retrieved from SQS. Defaults to NO_REDRIVE.
-     */
-    private SqsMessageDeletionPolicy messageDeletionPolicy;
+    private Long listenerShutdownTimeout = 10L;
 
     /**
      * Whether the incoming message has the SNS format and should be deserialized automatically.
@@ -47,12 +45,58 @@ public class SqsConsumerProperties {
      */
     private boolean snsFanout = true;
 
+    /**
+     * @deprecated
+     * This property was renamed. Use {@link SqsConsumerProperties#getMaxMessagesPerPoll()} instead.
+     */
+    @Deprecated(since = "3.0.0", forRemoval = true)
     public Integer getMaxNumberOfMessages() {
-        return maxNumberOfMessages;
+        return maxMessagesPerPoll;
     }
 
+    /**
+     * @deprecated
+     * This property was renamed. Use {@link SqsConsumerProperties#getMaxMessagesPerPoll()} instead.
+     */
+    @Deprecated(since = "3.0.0", forRemoval = true)
     public void setMaxNumberOfMessages(Integer maxNumberOfMessages) {
-        this.maxNumberOfMessages = maxNumberOfMessages;
+        this.maxMessagesPerPoll = maxNumberOfMessages;
+    }
+
+    /**
+     * @deprecated
+     * This property was renamed. Use {@link SqsConsumerProperties#getPollTimeout()} instead.
+     */
+    @Deprecated(since = "3.0.0", forRemoval = true)
+    public Integer getWaitTimeout() {
+        return pollTimeout;
+    }
+
+    /**
+     * @deprecated
+     * This property was renamed. Use {@link SqsConsumerProperties#setPollTimeout(Integer)} instead.
+     */
+    @Deprecated(since = "3.0.0", forRemoval = true)
+    public void setWaitTimeout(Integer waitTimeout) {
+        this.pollTimeout = waitTimeout;
+    }
+
+    /**
+     * @deprecated
+     * This property was renamed. Use {@link SqsConsumerProperties#getListenerShutdownTimeout()} instead.
+     */
+    @Deprecated(since = "3.0.0", forRemoval = true)
+    public Long getQueueStopTimeout() {
+        return listenerShutdownTimeout;
+    }
+
+    /**
+     * @deprecated
+     * This property was renamed. Use {@link SqsConsumerProperties#setListenerShutdownTimeout(Long)} instead.
+     */
+    @Deprecated(since = "3.0.0", forRemoval = true)
+    public void setQueueStopTimeout(final Long queueStopTimeout) {
+        this.listenerShutdownTimeout = queueStopTimeout;
     }
 
     public Integer getVisibilityTimeout() {
@@ -63,35 +107,36 @@ public class SqsConsumerProperties {
         this.visibilityTimeout = visibilityTimeout;
     }
 
-    public Integer getWaitTimeout() {
-        return waitTimeout;
-    }
-
-    public void setWaitTimeout(Integer waitTimeout) {
-        this.waitTimeout = waitTimeout;
-    }
-
-    public Long getQueueStopTimeout() {
-        return queueStopTimeout;
-    }
-
-    public void setQueueStopTimeout(Long queueStopTimeout) {
-        this.queueStopTimeout = queueStopTimeout;
-    }
-
-    public SqsMessageDeletionPolicy getMessageDeletionPolicy() {
-        return messageDeletionPolicy;
-    }
-
-    public void setMessageDeletionPolicy(SqsMessageDeletionPolicy messageDeletionPolicy) {
-        this.messageDeletionPolicy = messageDeletionPolicy;
-    }
-
     public boolean isSnsFanout() {
         return snsFanout;
     }
 
     public void setSnsFanout(boolean snsFanout) {
         this.snsFanout = snsFanout;
+    }
+
+
+    public Integer getMaxMessagesPerPoll() {
+        return maxMessagesPerPoll;
+    }
+
+    public void setMaxMessagesPerPoll(final Integer maxMessagesPerPoll) {
+        this.maxMessagesPerPoll = maxMessagesPerPoll;
+    }
+
+    public Integer getPollTimeout() {
+        return pollTimeout;
+    }
+
+    public void setPollTimeout(final Integer pollTimeout) {
+        this.pollTimeout = pollTimeout;
+    }
+
+    public Long getListenerShutdownTimeout() {
+        return listenerShutdownTimeout;
+    }
+
+    public void setListenerShutdownTimeout(final Long listenerShutdownTimeout) {
+        this.listenerShutdownTimeout = listenerShutdownTimeout;
     }
 }

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.testcontainers.containers.localstack.LocalStackContainer.Service.SQS;
 
 import java.time.Duration;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -20,15 +21,18 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
-import com.amazonaws.services.sqs.AmazonSQSAsync;
-import com.amazonaws.services.sqs.AmazonSQSAsyncClientBuilder;
 import reactor.core.publisher.Sinks;
 import reactor.test.StepVerifier;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.GetQueueUrlRequest;
+import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 
 @Testcontainers
 @SpringBootTest(properties = {
-        "cloud.aws.stack.auto=false",
-        "cloud.aws.region.static=eu-central-1",
+        "spring.cloud.aws.region.static=eu-central-1",
         "spring.cloud.stream.bindings.input-in-0.destination=queue1",
         "spring.cloud.stream.bindings.function.definition=input"
 })
@@ -42,7 +46,7 @@ class SqsBinderForSNSTest {
     private static final Sinks.Many<String> sink = Sinks.many().multicast().onBackpressureBuffer();
 
     @Autowired
-    private AmazonSQSAsync amazonSQS;
+    private SqsAsyncClient amazonSQS;
 
     @Autowired
     private HealthEndpoint healthEndpoint;
@@ -53,17 +57,17 @@ class SqsBinderForSNSTest {
     }
 
     @Test
-    void shouldPassMessageToConsumer() {
+    void shouldPassMessageToConsumer() throws ExecutionException, InterruptedException {
         final String testMessage = "test message";
 
         String json =
                 "{" +
-                    "\"Type\": \"Notification\"," +
+                        "\"Type\": \"Notification\"," +
                         "\"Message\": \"" + testMessage + "\"" +
-                "}";
+                        "}";
 
-        String queueUrl = amazonSQS.getQueueUrl("queue1").getQueueUrl();
-        amazonSQS.sendMessage(queueUrl, json);
+        String queueUrl = amazonSQS.getQueueUrl(GetQueueUrlRequest.builder().queueName("queue1").build()).get().queueUrl();
+        amazonSQS.sendMessage(SendMessageRequest.builder().queueUrl(queueUrl).messageBody(json).build());
 
         StepVerifier.create(sink.asFlux())
                 .assertNext(message -> {
@@ -82,10 +86,11 @@ class SqsBinderForSNSTest {
     static class AwsConfig {
 
         @Bean
-        AmazonSQSAsync amazonSQS() {
-            return AmazonSQSAsyncClientBuilder.standard()
-                    .withEndpointConfiguration(localStack.getEndpointConfiguration(SQS))
-                    .withCredentials(localStack.getDefaultCredentialsProvider())
+        SqsAsyncClient amazonSQS() {
+            return SqsAsyncClient.builder()
+                    .endpointOverride(localStack.getEndpointOverride(SQS))
+                    .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(localStack.getAccessKey(), localStack.getSecretKey())))
+                    .region(Region.EU_CENTRAL_1)
                     .build();
         }
 

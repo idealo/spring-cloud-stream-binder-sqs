@@ -9,7 +9,7 @@ import org.springframework.cloud.stream.binder.Binder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.amazonaws.services.sqs.AmazonSQSAsync;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import de.idealo.spring.stream.binder.sqs.SqsMessageHandlerBinder;
 import de.idealo.spring.stream.binder.sqs.health.SqsBinderHealthIndicator;
@@ -27,7 +27,7 @@ public class SqsBinderConfiguration {
     }
 
     @Bean
-    public SqsMessageHandlerBinder sqsMessageHandlerBinder(AmazonSQSAsync amazonSQS, SqsStreamProvisioner sqsStreamProvisioner, SqsExtendedBindingProperties extendedBindingProperties) {
+    public SqsMessageHandlerBinder sqsMessageHandlerBinder(SqsAsyncClient amazonSQS, SqsStreamProvisioner sqsStreamProvisioner, SqsExtendedBindingProperties extendedBindingProperties) {
         return new SqsMessageHandlerBinder(amazonSQS, sqsStreamProvisioner, extendedBindingProperties);
     }
 

@@ -1,5 +1,6 @@
 package de.idealo.spring.stream.binder.sqs;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,7 +17,9 @@ import org.springframework.integration.core.MessageProducer;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
 
-import com.amazonaws.services.sqs.AmazonSQSAsync;
+import io.awspring.cloud.sqs.listener.QueueNotFoundStrategy;
+import io.awspring.cloud.sqs.listener.SqsContainerOptions;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import de.idealo.spring.stream.binder.sqs.inbound.SqsInboundChannelAdapter;
 import de.idealo.spring.stream.binder.sqs.properties.SqsConsumerProperties;
@@ -28,18 +31,18 @@ public class SqsMessageHandlerBinder
         extends AbstractMessageChannelBinder<ExtendedConsumerProperties<SqsConsumerProperties>, ExtendedProducerProperties<SqsProducerProperties>, SqsStreamProvisioner>
         implements ExtendedPropertiesBinder<MessageChannel, SqsConsumerProperties, SqsProducerProperties> {
 
-    private final AmazonSQSAsync amazonSQS;
+    private final SqsAsyncClient sqsAsyncClient;
     private final SqsExtendedBindingProperties extendedBindingProperties;
     private final List<SqsInboundChannelAdapter> adapters = new ArrayList<>();
 
-    public SqsMessageHandlerBinder(AmazonSQSAsync amazonSQS, SqsStreamProvisioner provisioningProvider, SqsExtendedBindingProperties extendedBindingProperties) {
+    public SqsMessageHandlerBinder(SqsAsyncClient amazonSQS, SqsStreamProvisioner provisioningProvider, SqsExtendedBindingProperties extendedBindingProperties) {
         super(new String[0], provisioningProvider);
-        this.amazonSQS = amazonSQS;
+        this.sqsAsyncClient = amazonSQS;
         this.extendedBindingProperties = extendedBindingProperties;
     }
 
-    public AmazonSQSAsync getAmazonSQS() {
-        return amazonSQS;
+    public SqsAsyncClient getSqsAsyncClient() {
+        return sqsAsyncClient;
     }
 
     public List<SqsInboundChannelAdapter> getAdapters() {
@@ -48,9 +51,8 @@ public class SqsMessageHandlerBinder
 
     @Override
     protected MessageHandler createProducerMessageHandler(ProducerDestination destination, ExtendedProducerProperties<SqsProducerProperties> producerProperties, MessageChannel errorChannel) throws Exception {
-        SqsMessageHandler sqsMessageHandler = new SqsMessageHandler(amazonSQS);
+        SqsMessageHandler sqsMessageHandler = new SqsMessageHandler(sqsAsyncClient);
         sqsMessageHandler.setQueue(destination.getName());
-        sqsMessageHandler.setFailureChannel(errorChannel);
         sqsMessageHandler.setBeanFactory(getBeanFactory());
 
         sqsMessageHandler.setDelayExpressionString(String.format("headers.get('%s')", SqsHeaders.DELAY));
@@ -62,19 +64,17 @@ public class SqsMessageHandlerBinder
 
     @Override
     protected MessageProducer createConsumerEndpoint(ConsumerDestination destination, String group, ExtendedConsumerProperties<SqsConsumerProperties> properties) throws Exception {
-        SqsInboundChannelAdapter adapter = new SqsInboundChannelAdapter(amazonSQS, destination.getName());
-        adapter.setMaxNumberOfMessages(properties.getExtension().getMaxNumberOfMessages());
+        final SqsContainerOptions sqsContainerOptions =
+                SqsContainerOptions.builder()
+                        .maxMessagesPerPoll(properties.getExtension().getMaxMessagesPerPoll())
+                        .messageVisibility(Duration.ofSeconds(properties.getExtension().getVisibilityTimeout()))
+                        .pollTimeout(Duration.ofSeconds(properties.getExtension().getPollTimeout()))
+                        .listenerShutdownTimeout(Duration.ofSeconds(properties.getExtension().getListenerShutdownTimeout()))
+                        .queueNotFoundStrategy(QueueNotFoundStrategy.FAIL)
+                        .build();
+        SqsInboundChannelAdapter adapter = new SqsInboundChannelAdapter(sqsAsyncClient, destination.getName());
+        adapter.setSqsContainerOptions(sqsContainerOptions);
         adapter.setConcurrency(properties.getConcurrency());
-        adapter.setVisibilityTimeout(properties.getExtension().getVisibilityTimeout());
-        adapter.setWaitTimeOut(properties.getExtension().getWaitTimeout());
-
-        if (properties.getExtension().getQueueStopTimeout() != null) {
-            adapter.setQueueStopTimeout(properties.getExtension().getQueueStopTimeout());
-        }
-
-        if (properties.getExtension().getMessageDeletionPolicy() != null) {
-            adapter.setMessageDeletionPolicy(properties.getExtension().getMessageDeletionPolicy());
-        }
 
         if (properties.getExtension().isSnsFanout()) {
             adapter.setMessageBuilderFactory(new SnsFanoutMessageBuilderFactory());
